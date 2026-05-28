@@ -21,6 +21,24 @@ async def init_db():
         log.info("MongoDB connected ✓")
     except Exception as e:
         log.error("MongoDB connection failed: %s", e)
+        if "localhost" in MONGODB_URI or "127.0.0.1" in MONGODB_URI:
+            raise RuntimeError(
+                "\n========================================================================\n"
+                "CRITICAL: Failed to connect to MongoDB at localhost.\n"
+                "If you are deploying to Render, you must configure the 'MONGODB_URI'\n"
+                "environment variable in the Render Dashboard -> Environment tab\n"
+                "to point to your MongoDB Atlas instance.\n"
+                "========================================================================"
+            ) from e
+        else:
+            raise RuntimeError(
+                f"\n========================================================================\n"
+                f"CRITICAL: Failed to connect to MongoDB Atlas.\n"
+                f"Please check your MONGODB_URI connection string and ensure that your\n"
+                f"database user, password, and IP whitelist (0.0.0.0/0) are correctly set.\n"
+                f"Error: {e}\n"
+                f"========================================================================"
+            ) from e
 
     coll = get_collection()
     await coll.create_index("pmid", unique=True)
